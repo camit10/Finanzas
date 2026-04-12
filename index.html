@@ -25,19 +25,25 @@
 html,body{height:100%;overflow:hidden;}
 body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Arial,sans-serif;background:var(--bg);color:var(--text);display:flex;flex-direction:column;}
 
-header{background:var(--blue);color:white;padding:calc(var(--safe-top)+14px) 16px 14px;flex-shrink:0;}
-header h1{font-size:17px;font-weight:700;}
+header{background:var(--blue);color:white;padding:calc(var(--safe-top)+16px) 16px 10px;flex-shrink:0;text-align:center;}
+header h1{font-size:18px;font-weight:700;letter-spacing:.01em;}
 
-.tabs{display:flex;background:var(--blue);padding:0 16px 10px;gap:8px;flex-shrink:0;}
+.tabs{display:flex;background:var(--blue);padding:10px 16px 14px;gap:8px;flex-shrink:0;}
 .tab{flex:1;text-align:center;padding:7px 0;border-radius:20px;font-size:13px;font-weight:600;color:rgba(255,255,255,0.6);cursor:pointer;border:none;background:none;}
 .tab.active{background:white;color:var(--blue);}
 
-.page{display:none;flex:1;overflow-y:auto;padding:16px 16px calc(var(--safe-bot)+16px);}
+.page{display:none;flex:1;overflow-y:auto;padding:20px 20px calc(var(--safe-bot)+16px);}
 .page.active{display:block;}
 
 /* STATS */
-.stats{display:grid;grid-template-columns:1fr 1fr 1fr 1fr;gap:6px;margin-bottom:16px;}
-.stat{background:var(--white);border-radius:10px;padding:8px 4px;text-align:center;border:1px solid var(--border);}
+.stats-section{margin-bottom:18px;}
+.stats-section-title{font-size:12px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.05em;margin-bottom:10px;}
+.stats{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-bottom:8px;}
+.stats-disp{margin-top:4px;}
+.stat{background:var(--white);border-radius:10px;padding:10px 6px;text-align:center;border:1px solid var(--border);}
+.stat-disp{background:var(--green-bg);border-radius:10px;padding:10px 14px;border:1px solid #B8DDB0;display:flex;align-items:center;justify-content:space-between;}
+.stat-disp-label{font-size:12px;font-weight:700;color:var(--green);text-transform:uppercase;letter-spacing:.04em;}
+.stat-disp-value{font-size:15px;font-weight:700;color:var(--green);}
 .stat-label{font-size:9px;color:var(--muted);font-weight:600;text-transform:uppercase;letter-spacing:.03em;}
 .stat-value{font-size:12px;font-weight:700;margin-top:3px;}
 .v-ing{color:var(--green);}.v-gas{color:var(--red);}.v-inv{color:var(--inv);}.v-aho{color:var(--blue);}
@@ -101,8 +107,8 @@ input:focus,select:focus{border-color:var(--blue-mid);background:white;}
 .modal-btn.confirm{background:var(--blue);color:white;}
 
 /* HISTORIAL */
-.hist-top{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:14px;}
-.pie-card{background:var(--white);border-radius:12px;border:1px solid var(--border);padding:12px;}
+.hist-top{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:16px;}
+.pie-card{background:var(--white);border-radius:12px;border:1px solid var(--border);padding:14px;}
 .section-title{font-size:11px;font-weight:700;color:var(--blue);text-transform:uppercase;letter-spacing:.05em;margin-bottom:10px;}
 .pie-wrap{position:relative;width:100px;height:100px;margin:0 auto 8px;}
 .pie-legend{display:flex;flex-direction:column;gap:3px;}
@@ -121,14 +127,14 @@ input:focus,select:focus{border-color:var(--blue-mid);background:white;}
 .ahorro-pos{color:#7EFFA0;}.ahorro-neg{color:#FFB3B3;}
 
 /* TABLA GASTOS VARIABLES */
-.var-card{background:var(--white);border-radius:12px;border:1px solid var(--border);padding:14px;margin-bottom:14px;}
+.var-card{background:var(--white);border-radius:12px;border:1px solid var(--border);padding:16px;margin-bottom:16px;}
 .var-filter{display:flex;gap:8px;margin-bottom:12px;flex-wrap:wrap;align-items:center;}
 .var-filter select{width:auto;flex:1;padding:7px 10px;font-size:12px;}
 .var-filter .ytd-btn{padding:7px 12px;font-size:12px;font-weight:600;border:1.5px solid var(--blue);border-radius:8px;background:var(--bg);color:var(--blue);cursor:pointer;white-space:nowrap;}
 .var-filter .ytd-btn.active{background:var(--blue);color:white;}
-.var-table{width:100%;border-collapse:collapse;font-size:12px;}
+.var-table{width:90%;border-collapse:collapse;font-size:12px;margin:0 auto;}
 .var-table th{font-size:10px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.04em;padding:6px 8px;border-bottom:1.5px solid var(--border);text-align:left;}
-.var-table th:last-child,.var-table td:last-child{text-align:right;}
+.var-table th:nth-child(2),.var-table td:nth-child(2){text-align:right;}
 .var-table td{padding:7px 8px;border-bottom:1px solid var(--border);color:var(--text);}
 .var-table tr:last-child td{border-bottom:none;font-weight:700;}
 .pct-bar{display:flex;align-items:center;gap:6px;}
@@ -175,18 +181,26 @@ input:focus,select:focus{border-color:var(--blue-mid);background:white;}
 
 <header><h1>💰 Mis Finanzas</h1></header>
 <div class="tabs">
-  <button class="tab active" onclick="showPage('agregar')">Agregar</button>
+  <button class="tab active" onclick="showPage('agregar')">Principal</button>
   <button class="tab" onclick="showPage('lista')">Historial</button>
   <button class="tab" onclick="showPage('exportar')">Exportar</button>
 </div>
 
 <!-- AGREGAR -->
 <div class="page active" id="page-agregar">
-  <div class="stats" id="stats" style="display:none">
-    <div class="stat"><div class="stat-label">Ingresos</div><div class="stat-value v-ing" id="s-ing">$0</div></div>
-    <div class="stat"><div class="stat-label">Gastos</div><div class="stat-value v-gas" id="s-gas">$0</div></div>
-    <div class="stat"><div class="stat-label">Inversión</div><div class="stat-value v-inv" id="s-inv">$0</div></div>
-    <div class="stat"><div class="stat-label">Ahorro</div><div class="stat-value v-aho" id="s-aho">$0</div></div>
+  <div class="stats-section" id="stats" style="display:none">
+    <div class="stats-section-title">Resumen</div>
+    <div class="stats">
+      <div class="stat"><div class="stat-label">Ingresos</div><div class="stat-value v-ing" id="s-ing">$0</div></div>
+      <div class="stat"><div class="stat-label">Gastos</div><div class="stat-value v-gas" id="s-gas">$0</div></div>
+      <div class="stat"><div class="stat-label">Inversión</div><div class="stat-value v-inv" id="s-inv">$0</div></div>
+    </div>
+    <div class="stats-disp">
+      <div class="stat-disp">
+        <div class="stat-disp-label">Disponible</div>
+        <div class="stat-disp-value" id="s-aho">$0</div>
+      </div>
+    </div>
   </div>
 
   <div class="freq-header">
@@ -200,8 +214,8 @@ input:focus,select:focus{border-color:var(--blue-mid);background:white;}
     <div class="field">
       <label>Tipo</label>
       <div class="toggle-wrap">
-        <button class="toggle-btn active-gasto" id="btn-gasto" onclick="setTipo('Gasto')">↓ Gasto</button>
-        <button class="toggle-btn" id="btn-ingreso" onclick="setTipo('Ingreso')">↑ Ingreso</button>
+        <button class="toggle-btn active-ingreso" id="btn-ingreso" onclick="setTipo('Ingreso')">↑ Ingreso</button>
+        <button class="toggle-btn" id="btn-gasto" onclick="setTipo('Gasto')">↓ Gasto</button>
         <button class="toggle-btn" id="btn-inversion" onclick="setTipo('Inversion')">↓ Inversión</button>
       </div>
     </div>
@@ -350,7 +364,7 @@ const DEFAULT_FREC=[
 
 let rows=JSON.parse(localStorage.getItem("finanzas_rows")||"[]");
 let frecuentes=JSON.parse(localStorage.getItem("finanzas_frec")||JSON.stringify(DEFAULT_FREC));
-let tipoActual="Gasto";
+let tipoActual="Ingreso";
 let editingFrec=false;
 let editingId=null;
 let frecEditIdx=null;
@@ -500,7 +514,7 @@ function closeModal(id){document.getElementById(id).classList.remove("open");}
 function renderStats(){
   const el=document.getElementById("stats");
   if(rows.length===0){el.style.display="none";return;}
-  el.style.display="grid";
+  el.style.display="block";
   let ing=0,gas=0,inv=0;
   rows.forEach(r=>{
     if(r.tipo==="Ingreso") ing+=r.monto;
@@ -513,7 +527,13 @@ function renderStats(){
   const aho=ing-gas-inv;
   const e=document.getElementById("s-aho");
   e.textContent=(aho<0?"-":"")+fmt(aho);
-  e.className="stat-value "+(aho>=0?"v-aho":"v-gas");
+  const dispCard=e.closest(".stat-disp");
+  if(dispCard){
+    dispCard.style.background=aho>=0?"var(--green-bg)":"var(--red-bg)";
+    dispCard.style.borderColor=aho>=0?"#B8DDB0":"#F5B8B8";
+    e.style.color=aho>=0?"var(--green)":"var(--red)";
+    dispCard.querySelector(".stat-disp-label").style.color=aho>=0?"var(--green)":"var(--red)";
+  }
 }
 
 // ── PAGES ─────────────────────────────────────────────────────────────────────
@@ -742,7 +762,8 @@ function showToast(msg,ok=true){
 
 // ── INIT ──────────────────────────────────────────────────────────────────────
 document.getElementById("fecha").valueAsDate=new Date();
-onCatChange();renderFrecuentes();renderStats();
+setTipo("Ingreso");
+renderFrecuentes();renderStats();
 if("serviceWorker"in navigator) navigator.serviceWorker.register("./sw.js").catch(()=>{});
 </script>
 </body>
