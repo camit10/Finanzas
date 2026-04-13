@@ -32,8 +32,10 @@ header h1{font-size:18px;font-weight:700;letter-spacing:.01em;}
 .tab{flex:1;text-align:center;padding:7px 0;border-radius:20px;font-size:13px;font-weight:600;color:rgba(255,255,255,0.6);cursor:pointer;border:none;background:none;}
 .tab.active{background:white;color:var(--blue);}
 
-.page{display:none;flex:1;overflow-y:auto;padding:10px 60px calc(var(--safe-bot)+16px);max-width:2500px;margin:0 auto;width:100%;}
+/* CAMBIO 1: márgenes laterales con fondo gris visible */
+.page{display:none;flex:1;overflow-y:auto;background:var(--bg);padding:0;}
 .page.active{display:block;}
+.page-inner{max-width:600px;margin:0 auto;padding:10px 16px calc(var(--safe-bot)+16px);}
 
 /* LOADING */
 .loading-overlay{position:fixed;inset:0;background:rgba(31,78,121,0.92);z-index:900;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:16px;}
@@ -171,13 +173,11 @@ input:focus,select:focus{border-color:var(--blue-mid);background:white;}
 .btn-export{width:100%;padding:14px;font-size:15px;font-weight:700;border-radius:10px;border:none;cursor:pointer;margin-bottom:10px;font-family:inherit;}
 .btn-copy{background:var(--blue);color:white;}
 .btn-csv{background:var(--bg);color:var(--blue);border:1.5px solid var(--blue);}
-.btn-clear{background:var(--red-bg);color:var(--red);}
 .count-badge{display:inline-block;background:var(--blue-light);color:var(--blue);padding:2px 10px;border-radius:12px;font-size:12px;font-weight:700;margin-bottom:12px;}
 </style>
 </head>
 <body>
 
-<!-- LOADING -->
 <div class="loading-overlay" id="loading">
   <div class="spinner"></div>
   <div class="loading-txt">Sincronizando datos...</div>
@@ -195,8 +195,9 @@ input:focus,select:focus{border-color:var(--blue-mid);background:white;}
 
 <!-- PRINCIPAL -->
 <div class="page active" id="page-agregar">
+ <div class="page-inner">
   <div class="stats-section" id="stats" style="display:none">
-    <div class="stats-section-title">Resumen</div>
+    <div class="stats-section-title">Resumen — <span id="stats-mes-label"></span></div>
     <div class="stats">
       <div class="stat"><div class="stat-label">Ingresos</div><div class="stat-value v-ing" id="s-ing">$0</div></div>
       <div class="stat"><div class="stat-label">Gastos</div><div class="stat-value v-gas" id="s-gas">$0</div></div>
@@ -209,13 +210,11 @@ input:focus,select:focus{border-color:var(--blue-mid);background:white;}
       </div>
     </div>
   </div>
-
   <div class="freq-header">
     <div class="freq-title">Ingresos y Gastos Recurrentes</div>
     <button class="btn-edit-freq" id="btn-edit-freq" onclick="toggleEditFrec()">Editar</button>
   </div>
   <div class="freq-grid" id="freq-grid"></div>
-
   <div class="card">
     <div class="card-title">Nueva transacción</div>
     <div class="field">
@@ -230,9 +229,7 @@ input:focus,select:focus{border-color:var(--blue-mid);background:white;}
       <div class="field"><label>Fecha</label><input type="date" id="fecha"/></div>
       <div class="field">
         <label>Categoría</label>
-        <select id="categoria" onchange="onCatChange()">
-          <option value="Ingreso">Ingreso</option>
-        </select>
+        <select id="categoria" onchange="onCatChange()"><option value="Ingreso">Ingreso</option></select>
       </div>
     </div>
     <div class="field"><label>Subcategoría</label><select id="subcategoria"></select></div>
@@ -243,10 +240,12 @@ input:focus,select:focus{border-color:var(--blue-mid);background:white;}
     </div>
     <button class="btn-add" onclick="addRow()">+ Agregar</button>
   </div>
+ </div>
 </div>
 
 <!-- HISTORIAL -->
 <div class="page" id="page-lista">
+ <div class="page-inner">
   <div class="hist-top">
     <div class="pie-card">
       <div class="section-title">Distribución del mes</div>
@@ -286,10 +285,12 @@ input:focus,select:focus{border-color:var(--blue-mid);background:white;}
   <div id="lista-content">
     <div class="empty"><div class="empty-icon">📋</div><div class="empty-text">Aún no hay transacciones.</div></div>
   </div>
+ </div>
 </div>
 
 <!-- EXPORTAR -->
 <div class="page" id="page-exportar">
+ <div class="page-inner">
   <div class="export-card">
     <div class="export-title">Cómo exportar a Google Sheets</div>
     <div class="step"><div class="step-num">1</div><div class="step-text">Presiona <strong>"Copiar filas"</strong> aquí abajo</div></div>
@@ -304,6 +305,7 @@ input:focus,select:focus{border-color:var(--blue-mid);background:white;}
     <button class="btn-export btn-copy" onclick="copyTSV()">📋 Copiar filas para Sheets</button>
     <button class="btn-export btn-csv" onclick="exportCSV()">⬇ Descargar como CSV</button>
   </div>
+ </div>
 </div>
 
 <!-- MODAL EDITAR TX -->
@@ -390,59 +392,48 @@ let pieInst=null,barInst=null;
 const fmt=n=>"$"+Math.abs(Math.round(n)).toLocaleString("es-CL");
 const setSyncStatus=(msg,ok=true)=>{
   const el=document.getElementById("sync-status");
-  el.textContent=msg;
-  el.style.color=ok?"rgba(255,255,255,.6)":"#FFB3B3";
+  el.textContent=msg;el.style.color=ok?"rgba(255,255,255,.6)":"#FFB3B3";
 };
 
-// ── FIREBASE SYNC ─────────────────────────────────────────────────────────────
-// Listen to transactions in real time
-onSnapshot(collection(db,"transacciones"), snap=>{
+// Mes actual helper
+const nowMes=()=>MESES[new Date().getMonth()];
+const nowAño=()=>new Date().getFullYear();
+
+// FIREBASE
+onSnapshot(collection(db,"transacciones"),snap=>{
   rows=snap.docs.map(d=>({...d.data(),_fireId:d.id}));
   document.getElementById("loading").classList.add("hidden");
   setSyncStatus("✓ Sincronizado");
   renderStats();
-  const activePage=document.querySelector(".page.active")?.id;
-  if(activePage==="page-lista"){populateVarFilter();renderLista();}
-  if(activePage==="page-exportar") renderExport();
-}, err=>{
+  const pg=document.querySelector(".page.active")?.id;
+  if(pg==="page-lista"){populateVarFilter();renderLista();}
+  if(pg==="page-exportar") renderExport();
+},err=>{
   document.getElementById("loading").classList.add("hidden");
-  setSyncStatus("⚠️ Sin conexión — modo local",false);
+  setSyncStatus("⚠️ Sin conexión",false);
 });
 
-// Listen to frecuentes config
 const frecDoc=doc(db,"config","frecuentes");
-getDoc(frecDoc).then(d=>{
-  if(d.exists()) frecuentes=d.data().lista||DEFAULT_FREC;
-  renderFrecuentes();
-});
+getDoc(frecDoc).then(d=>{if(d.exists())frecuentes=d.data().lista||DEFAULT_FREC;renderFrecuentes();});
 
 async function saveRow(r){
   try{
-    const {_fireId,...data}=r;
-    if(_fireId){
-      await updateDoc(doc(db,"transacciones",_fireId),data);
-    } else {
-      await addDoc(collection(db,"transacciones"),data);
-    }
+    const{_fireId,...data}=r;
+    if(_fireId) await updateDoc(doc(db,"transacciones",_fireId),data);
+    else await addDoc(collection(db,"transacciones"),data);
     setSyncStatus("✓ Guardado en la nube");
   }catch(e){setSyncStatus("⚠️ Error al guardar",false);}
 }
-
 async function deleteRow(fireId){
   if(!confirm("¿Eliminar esta transacción?"))return;
-  try{
-    await deleteDoc(doc(db,"transacciones",fireId));
-    setSyncStatus("✓ Eliminado");
-  }catch(e){setSyncStatus("⚠️ Error al eliminar",false);}
+  try{await deleteDoc(doc(db,"transacciones",fireId));setSyncStatus("✓ Eliminado");}
+  catch(e){setSyncStatus("⚠️ Error al eliminar",false);}
 }
-
 async function saveFrecs(){
-  try{
-    await setDoc(doc(db,"config","frecuentes"),{lista:frecuentes});
-  }catch(e){}
+  try{await setDoc(doc(db,"config","frecuentes"),{lista:frecuentes});}catch(e){}
 }
 
-// ── TIPO / CAT ────────────────────────────────────────────────────────────────
+// TIPO/CAT
 function setTipo(tipo){
   tipoActual=tipo;
   document.getElementById("btn-gasto").className="toggle-btn"+(tipo==="Gasto"?" active-gasto":"");
@@ -455,14 +446,13 @@ function setTipo(tipo){
   onCatChange();
 }
 window.setTipo=setTipo;
-
 function onCatChange(){
   const cat=document.getElementById("categoria").value;
   document.getElementById("subcategoria").innerHTML=(SUBCATS[cat]||[]).map(s=>`<option>${s}</option>`).join("");
 }
 window.onCatChange=onCatChange;
 
-// ── FRECUENTES ────────────────────────────────────────────────────────────────
+// FRECUENTES
 function renderFrecuentes(){
   const grid=document.getElementById("freq-grid");
   grid.className="freq-grid"+(editingFrec?" editing-freq":"");
@@ -476,9 +466,7 @@ function renderFrecuentes(){
   document.getElementById("btn-edit-freq").textContent=editingFrec?"Listo":"Editar";
 }
 window.renderFrecuentes=renderFrecuentes;
-
 window.toggleEditFrec=()=>{editingFrec=!editingFrec;renderFrecuentes();};
-
 window.addFrecuente=async(i)=>{
   if(editingFrec)return;
   const f=frecuentes[i];
@@ -486,13 +474,10 @@ window.addFrecuente=async(i)=>{
   const d=new Date(fechaVal+"T12:00:00");
   const cat=f.tipo==="Ingreso"?"Ingreso":f.tipo==="Inversion"?"Inversion":f.cat||"Gasto Fijo";
   const subcat=f.subcat||(SUBCATS[cat]||[])[0]||"";
-  const row={fecha:fechaVal,mes:MESES[d.getMonth()],año:d.getFullYear(),cat,subcat,concepto:f.nombre,tipo:f.tipo,monto:f.monto,id:Date.now()+Math.random()};
-  await saveRow(row);
+  await saveRow({fecha:fechaVal,mes:MESES[d.getMonth()],año:d.getFullYear(),cat,subcat,concepto:f.nombre,tipo:f.tipo,monto:f.monto,id:Date.now()+Math.random()});
   showToast("✓ "+f.nombre+" agregado");
 };
-
 window.delFrec=(i)=>{frecuentes.splice(i,1);saveFrecs();renderFrecuentes();};
-
 window.openAddFrec=()=>{
   frecEditIdx=null;
   document.getElementById("modal-freq-title").textContent="Nuevo recurrente";
@@ -525,7 +510,7 @@ window.saveFrec=()=>{
   saveFrecs();renderFrecuentes();closeModal("modal-freq");
 };
 
-// ── ADD ROW ───────────────────────────────────────────────────────────────────
+// ADD ROW
 window.addRow=async()=>{
   const fechaVal=document.getElementById("fecha").value;
   const cat=document.getElementById("categoria").value;
@@ -534,18 +519,16 @@ window.addRow=async()=>{
   const monto=parseInt(document.getElementById("monto").value);
   if(!fechaVal||!concepto||!monto||monto<=0){showToast("⚠️ Completa todos los campos",false);return;}
   const d=new Date(fechaVal+"T12:00:00");
-  const row={fecha:fechaVal,mes:MESES[d.getMonth()],año:d.getFullYear(),cat,subcat,concepto,tipo:tipoActual,monto,id:Date.now()};
-  await saveRow(row);
+  await saveRow({fecha:fechaVal,mes:MESES[d.getMonth()],año:d.getFullYear(),cat,subcat,concepto,tipo:tipoActual,monto,id:Date.now()});
   document.getElementById("concepto").value="";
   document.getElementById("monto").value="";
   showToast("✓ "+concepto+" agregado");
 };
 
-// ── EDIT TX ───────────────────────────────────────────────────────────────────
+// EDIT TX
 window.openEditTx=(fireId)=>{
   editingId=fireId;
-  const r=rows.find(x=>x._fireId===fireId);
-  if(!r)return;
+  const r=rows.find(x=>x._fireId===fireId);if(!r)return;
   document.getElementById("edit-concepto").value=r.concepto;
   document.getElementById("edit-fecha").value=r.fecha;
   document.getElementById("edit-monto").value=r.monto;
@@ -554,8 +537,7 @@ window.openEditTx=(fireId)=>{
   openModal("modal-edit");
 };
 window.saveEdit=async()=>{
-  const r=rows.find(x=>x._fireId===editingId);
-  if(!r)return;
+  const r=rows.find(x=>x._fireId===editingId);if(!r)return;
   const concepto=document.getElementById("edit-concepto").value.trim();
   const fechaVal=document.getElementById("edit-fecha").value;
   const subcat=document.getElementById("edit-subcat").value;
@@ -563,24 +545,26 @@ window.saveEdit=async()=>{
   if(!concepto||!fechaVal||!monto||monto<=0){showToast("⚠️ Datos inválidos",false);return;}
   const d=new Date(fechaVal+"T12:00:00");
   r.concepto=concepto;r.fecha=fechaVal;r.mes=MESES[d.getMonth()];r.año=d.getFullYear();r.subcat=subcat;r.monto=monto;
-  await saveRow(r);
-  closeModal("modal-edit");
-  showToast("✓ Transacción actualizada");
+  await saveRow(r);closeModal("modal-edit");showToast("✓ Transacción actualizada");
 };
 window.deleteRow=deleteRow;
 
-// ── MODALS ────────────────────────────────────────────────────────────────────
 const openModal=id=>document.getElementById(id).classList.add("open");
 const closeModal=id=>document.getElementById(id).classList.remove("open");
 window.openModal=openModal;window.closeModal=closeModal;
 
-// ── STATS ─────────────────────────────────────────────────────────────────────
+// CAMBIO 2: Resumen filtra solo el mes actual
 function renderStats(){
   const el=document.getElementById("stats");
+  const mes=nowMes(),año=nowAño();
+  // Filtrar solo transacciones del mes actual
+  const mesRows=rows.filter(r=>r.mes===mes&&r.año===año);
   if(rows.length===0){el.style.display="none";return;}
   el.style.display="block";
+  // Actualizar etiqueta del mes
+  document.getElementById("stats-mes-label").textContent=mes+" "+año;
   let ing=0,gas=0,inv=0;
-  rows.forEach(r=>{if(r.tipo==="Ingreso")ing+=r.monto;else if(r.tipo==="Inversion")inv+=r.monto;else gas+=r.monto;});
+  mesRows.forEach(r=>{if(r.tipo==="Ingreso")ing+=r.monto;else if(r.tipo==="Inversion")inv+=r.monto;else gas+=r.monto;});
   document.getElementById("s-ing").textContent=fmt(ing);
   document.getElementById("s-gas").textContent=fmt(gas);
   document.getElementById("s-inv").textContent=fmt(inv);
@@ -596,7 +580,6 @@ function renderStats(){
   }
 }
 
-// ── PAGES ─────────────────────────────────────────────────────────────────────
 window.showPage=(id)=>{
   document.querySelectorAll(".page").forEach(p=>p.classList.remove("active"));
   document.querySelectorAll(".tab").forEach(t=>t.classList.remove("active"));
@@ -607,24 +590,16 @@ window.showPage=(id)=>{
   if(id==="agregar") renderStats();
 };
 
-// ── PIE ───────────────────────────────────────────────────────────────────────
 function renderPieChart(){
-  const now=new Date();
-  const mes=MESES[now.getMonth()],año=now.getFullYear();
+  const mes=nowMes(),año=nowAño();
   const curr=rows.filter(r=>r.mes===mes&&r.año===año);
   let ing=0,fijo=0,variable=0,inv=0;
-  curr.forEach(r=>{
-    if(r.tipo==="Ingreso")ing+=r.monto;
-    else if(r.tipo==="Inversion")inv+=r.monto;
-    else if(r.cat==="Gasto Fijo")fijo+=r.monto;
-    else variable+=r.monto;
-  });
+  curr.forEach(r=>{if(r.tipo==="Ingreso")ing+=r.monto;else if(r.tipo==="Inversion")inv+=r.monto;else if(r.cat==="Gasto Fijo")fijo+=r.monto;else variable+=r.monto;});
   const ahorro=Math.max(0,ing-fijo-variable-inv);
   const labels=["Ingreso","Gasto Fijo","Gasto Variable","Inversión","Ahorro"];
   const data=[ing,fijo,variable,inv,ahorro];
   const colors=[PIE_COLORS["Ingreso"],PIE_COLORS["Gasto Fijo"],PIE_COLORS["Gasto Variable"],PIE_COLORS["Inversión"],PIE_COLORS["Ahorro"]];
-  const total=data.reduce((a,b)=>a+b,0);
-  const hasData=data.some(v=>v>0);
+  const total=data.reduce((a,b)=>a+b,0);const hasData=data.some(v=>v>0);
   const ctx=document.getElementById("pieChart").getContext("2d");
   if(pieInst)pieInst.destroy();
   pieInst=new Chart(ctx,{type:"doughnut",data:{labels,datasets:[{data:hasData?data:[1],backgroundColor:hasData?colors:["#E5E7EB"],borderWidth:0}]},options:{cutout:"55%",plugins:{legend:{display:false},tooltip:{enabled:hasData,callbacks:{label:c=>{const pct=total>0?Math.round(c.raw/total*100):0;return c.label+": "+fmt(c.raw)+" ("+pct+"%)";}}},},animation:{duration:400}}});
@@ -632,48 +607,45 @@ function renderPieChart(){
 }
 
 function renderAhorroCard(){
-  const now=new Date();
-  const mes=MESES[now.getMonth()],año=now.getFullYear();
+  const mes=nowMes(),año=nowAño();
   const curr=rows.filter(r=>r.mes===mes&&r.año===año);
   let ing=0,gas=0,inv=0;
   curr.forEach(r=>{if(r.tipo==="Ingreso")ing+=r.monto;else if(r.tipo==="Inversion")inv+=r.monto;else gas+=r.monto;});
-  const ahorro=ing-gas;const total=ahorro+inv;const pct=ing>0?Math.round((total/ing)*100):0;
+  const total=(ing-gas)+inv;const pct=ing>0?Math.round((total/ing)*100):0;
   document.getElementById("ahorro-mes").textContent=mes+" "+año;
   document.getElementById("ahorro-valor").textContent=(total<0?"-":"")+fmt(total);
   const sub=document.getElementById("ahorro-pct");
   if(ing===0){sub.textContent="Sin ingresos aún";sub.className="ahorro-pct";}
   else{sub.textContent=(total>=0?"+":"")+pct+"% del ingreso";sub.className="ahorro-pct "+(total>=0?"ahorro-pos":"ahorro-neg");}
-  let tingTotal=0,tgasTotal=0,tinvTotal=0;
-  rows.forEach(r=>{if(r.tipo==="Ingreso")tingTotal+=r.monto;else if(r.tipo==="Inversion")tinvTotal+=r.monto;else tgasTotal+=r.monto;});
-  const acumTotal=(tingTotal-tgasTotal)+tinvTotal;
-  document.getElementById("ahorro-acum").textContent=(acumTotal<0?"-":"")+fmt(acumTotal);
-  const subAcum=document.getElementById("ahorro-acum-sub");
-  subAcum.textContent=acumTotal>=0?"Vas bien 👍":"En déficit";
-  subAcum.className="ahorro-pct "+(acumTotal>=0?"ahorro-pos":"ahorro-neg");
+  let tI=0,tG=0,tV=0;
+  rows.forEach(r=>{if(r.tipo==="Ingreso")tI+=r.monto;else if(r.tipo==="Inversion")tV+=r.monto;else tG+=r.monto;});
+  const acum=(tI-tG)+tV;
+  document.getElementById("ahorro-acum").textContent=(acum<0?"-":"")+fmt(acum);
+  const sa=document.getElementById("ahorro-acum-sub");
+  sa.textContent=acum>=0?"Vas bien 👍":"En déficit";
+  sa.className="ahorro-pct "+(acum>=0?"ahorro-pos":"ahorro-neg");
 }
 
 function populateVarFilter(){
   const sel=document.getElementById("var-mes-sel");
   const mesesDisp=[];const seen=new Set();
-  [...rows].reverse().forEach(r=>{const k=r.mes+" "+r.año;if(!seen.has(k)){seen.add(k);mesesDisp.push({label:k,mes:r.mes,año:r.año});}});
-  if(mesesDisp.length===0){const now=new Date();mesesDisp.push({label:MESES[now.getMonth()]+" "+now.getFullYear(),mes:MESES[now.getMonth()],año:now.getFullYear()});}
+  [...rows].reverse().forEach(r=>{const k=r.mes+" "+r.año;if(!seen.has(k)){seen.add(k);mesesDisp.push({label:k});}});
+  if(mesesDisp.length===0){mesesDisp.push({label:nowMes()+" "+nowAño()});}
   const prev=sel.value;
   sel.innerHTML=mesesDisp.map(m=>`<option value="${m.label}">${m.label}</option>`).join("");
   if(prev&&[...sel.options].some(o=>o.value===prev))sel.value=prev;
 }
 window.populateVarFilter=populateVarFilter;
-
 window.toggleYTD=()=>{ytdActive=!ytdActive;document.getElementById("ytd-btn").classList.toggle("active",ytdActive);renderVarTable();};
 
 function renderVarTable(){
   let varRows;
   if(ytdActive){
-    const año=new Date().getFullYear();
-    varRows=rows.filter(r=>r.año===año&&r.cat==="Gasto Variable"&&r.tipo==="Gasto");
+    varRows=rows.filter(r=>r.año===nowAño()&&r.cat==="Gasto Variable"&&r.tipo==="Gasto");
   } else {
     const sel=document.getElementById("var-mes-sel").value;
     if(!sel){document.getElementById("var-tbody").innerHTML='<tr><td colspan="3" style="text-align:center;color:var(--muted);padding:12px">Sin datos</td></tr>';return;}
-    const [mes,...rest]=sel.split(" ");const año=parseInt(rest.join(" "));
+    const[mes,...rest]=sel.split(" ");const año=parseInt(rest.join(" "));
     varRows=rows.filter(r=>r.mes===mes&&r.año===año&&r.tipo==="Gasto"&&r.cat==="Gasto Variable");
   }
   const groups={};
@@ -731,14 +703,14 @@ function renderLista(){
 function renderExport(){
   const n=rows.length;
   document.getElementById("export-count").textContent=n+(n===1?" transacción":" transacciones");
-  document.getElementById("export-desc").textContent=n===0?'Aún no hay transacciones guardadas.':'Presiona "Copiar filas" y pega en Google Sheets.';
+  document.getElementById("export-desc").textContent=n===0?'Aún no hay transacciones.':'Presiona "Copiar filas" y pega en Google Sheets.';
 }
 window.renderExport=renderExport;
 
 window.copyTSV=()=>{
   if(rows.length===0){showToast("⚠️ No hay nada que copiar",false);return;}
   const lines=rows.map(r=>[r.fecha,r.mes,r.año,r.cat,r.subcat,r.concepto,r.tipo,r.monto].join("\t"));
-  navigator.clipboard.writeText(lines.join("\n")).then(()=>showToast("✓ ¡Copiado! Ahora pega en Sheets")).catch(()=>prompt("Copia manualmente:",lines.join("\n")));
+  navigator.clipboard.writeText(lines.join("\n")).then(()=>showToast("✓ ¡Copiado!")).catch(()=>prompt("Copia manualmente:",lines.join("\n")));
 };
 window.exportCSV=()=>{
   if(rows.length===0){showToast("⚠️ No hay nada",false);return;}
@@ -756,12 +728,10 @@ function showToast(msg,ok=true){
 }
 window.showToast=showToast;
 
-// INIT
 document.getElementById("fecha").valueAsDate=new Date();
 setTipo("Ingreso");
 renderFrecuentes();
-
-if("serviceWorker"in navigator) navigator.serviceWorker.register("./sw.js").catch(()=>{});
+if("serviceWorker"in navigator)navigator.serviceWorker.register("./sw.js").catch(()=>{});
 </script>
 </body>
 </html>
