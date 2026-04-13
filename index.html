@@ -641,9 +641,9 @@ function renderPieChart(){
   let ing=0,fijo=0,variable=0,inv=0;
   curr.forEach(r=>{if(r.tipo==="Ingreso")ing+=r.monto;else if(r.tipo==="Inversion")inv+=r.monto;else if(r.cat==="Gasto Fijo")fijo+=r.monto;else variable+=r.monto;});
   const ahorro=Math.max(0,ing-fijo-variable-inv);
-  const labels=["Ingreso","Gasto Fijo","Gasto Variable","Inversión","Ahorro"];
-  const data=[ing,fijo,variable,inv,ahorro];
-  const colors=[PIE_COLORS["Ingreso"],PIE_COLORS["Gasto Fijo"],PIE_COLORS["Gasto Variable"],PIE_COLORS["Inversión"],PIE_COLORS["Ahorro"]];
+  const labels=["Gasto Fijo","Gasto Variable","Inversión","Disponible"];
+  const data=[fijo,variable,inv,ahorro];
+  const colors=[PIE_COLORS["Gasto Fijo"],PIE_COLORS["Gasto Variable"],PIE_COLORS["Inversión"],PIE_COLORS["Ahorro"]];
   const total=data.reduce((a,b)=>a+b,0);const hasData=data.some(v=>v>0);
   const ctx=document.getElementById("pieChart").getContext("2d");
   if(pieInst)pieInst.destroy();
