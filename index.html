@@ -765,30 +765,18 @@ function renderInvSection(){
   const grandTotal=Object.values(catTotals).reduce((a,b)=>a+b,0);
   const activeCats=INV_CATS.filter(c=>catTotals[c]>0);
 
-  // Stacked bar
-  const stackEl=document.getElementById("inv-stack-bar");
-  stackEl.innerHTML=activeCats.map(c=>{
-    const pct=grandTotal>0?Math.round(catTotals[c]/grandTotal*100):0;
-    const label=c==="Otros Inv"?"Otros":c;
-    return`<div class="inv-stack-seg" style="width:${pct}%;background:${INV_COLORS[c]}" title="${label}: ${pct}%">${pct>8?pct+"%":""}</div>`;
-  }).join("");
-  // Legend under stack bar
-  const legendHtml=`<div style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:12px;margin-top:6px;">
-    ${activeCats.map(c=>{
-      const pct=grandTotal>0?Math.round(catTotals[c]/grandTotal*100):0;
-      const label=c==="Otros Inv"?"Otros":c;
-      return`<div style="display:flex;align-items:center;gap:4px;font-size:10px;"><div style="width:8px;height:8px;border-radius:50%;background:${INV_COLORS[c]};flex-shrink:0"></div><span>${label} ${pct}%</span></div>`;
-    }).join("")}
-  </div>`;
+  // Sin stacked bar
+  document.getElementById("inv-stack-bar").style.display="none";
 
-  // Horizontal bar chart
+  // Horizontal bar chart con % al lado izquierdo
   const maxVal=Math.max(...activeCats.map(c=>catTotals[c]));
   const horizHtml=activeCats.map(c=>{
     const pct=maxVal>0?Math.round(catTotals[c]/maxVal*100):0;
+    const realPct=grandTotal>0?Math.round(catTotals[c]/grandTotal*100):0;
     const label=c==="Otros Inv"?"Otros":c;
     const mM=(catTotals[c]/1000000).toFixed(1)+"M";
     return`<div class="inv-bar-row">
-      <div class="inv-bar-label">${label}</div>
+      <div class="inv-bar-label">${label} <span style="color:var(--muted);font-weight:400">${realPct}%</span></div>
       <div class="inv-bar-track">
         <div class="inv-bar-fill" style="width:${pct}%;background:${INV_COLORS[c]}">${catTotals[c]>500000?mM:""}</div>
       </div>
@@ -797,7 +785,7 @@ function renderInvSection(){
   const xLabels=`<div style="display:flex;justify-content:space-between;padding-left:108px;font-size:9px;color:var(--muted);margin-top:4px;">
     <span>0</span><span>${(maxVal/2/1000000).toFixed(1)}M</span><span>${(maxVal/1000000).toFixed(1)}M</span>
   </div>`;
-  document.getElementById("inv-horiz-wrap").innerHTML=legendHtml+horizHtml+xLabels;
+  document.getElementById("inv-horiz-wrap").innerHTML=horizHtml+xLabels;
 
   // Tables per category
   const subTotals={};
